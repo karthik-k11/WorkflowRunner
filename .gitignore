@@ -1,0 +1,27 @@
+﻿# Virtual environments
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local databases
+instance/*.db
+instance/*.sqlite
+instance/*.sqlite3
+
+# Environment variables and secrets
+.env
+.env.*
+
+# Test and coverage artifacts
+.coverage
+htmlcov/
+
+# Editor and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
