@@ -11,6 +11,7 @@ __pycache__/
 instance/*.db
 instance/*.sqlite
 instance/*.sqlite3
+instance/workflow-files/
 
 # Environment variables and secrets
 .env
