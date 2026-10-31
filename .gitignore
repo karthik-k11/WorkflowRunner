@@ -8,18 +8,25 @@ __pycache__/
 .pytest_cache/
 
 # Local databases
-instance/*.db
-instance/*.sqlite
-instance/*.sqlite3
-instance/workflow-files/
+instance/
 
 # Environment variables and secrets
 .env
 .env.*
+!.env.example
 
 # Test and coverage artifacts
 .coverage
+.coverage.*
 htmlcov/
+
+# Python tooling
+.ruff_cache/
+.mypy_cache/
+.tox/
+
+# Logs
+*.log
 
 # Editor and operating system files
 .vscode/
