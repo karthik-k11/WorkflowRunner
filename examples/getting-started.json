@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "workflow": {
+    "name": "Getting started: local file check",
+    "description": "A safe example with a mapped dependency and an independent allowlisted command."
+  },
+  "tasks": [
+    {
+      "task_id": "prepare",
+      "name": "Prepare status",
+      "task_type": "python",
+      "config": {
+        "operation": "echo",
+        "value": "Ready to inspect the local sample."
+      },
+      "dependencies": [],
+      "timeout_seconds": 10,
+      "enabled": true
+    },
+    {
+      "task_id": "inspect",
+      "name": "Read sample text",
+      "task_type": "file",
+      "config": {
+        "action": "read_text",
+        "path": "sample.txt"
+      },
+      "dependencies": [
+        "prepare"
+      ],
+      "timeout_seconds": 10,
+      "enabled": true
+    },
+    {
+      "task_id": "summary",
+      "name": "Create sample summary",
+      "task_type": "python",
+      "config": {
+        "operation": "count",
+        "inputs": {
+          "items": {
+            "from_task": "inspect",
+            "path": "text"
+          }
+        }
+      },
+      "dependencies": [
+        "inspect"
+      ],
+      "timeout_seconds": 10,
+      "enabled": true
+    },
+    {
+      "task_id": "runtime",
+      "name": "Check Python runtime",
+      "task_type": "command",
+      "config": {
+        "command": "python-version"
+      },
+      "dependencies": [],
+      "timeout_seconds": 10,
+      "enabled": true
+    }
+  ]
+}
