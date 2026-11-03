@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Settings · WorkflowRunner{% endblock %}
+{% block section %}Settings{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">CONFIGURATION</p><h1>Settings</h1><p class="muted">Review the local execution boundaries and concurrency limit.</p></div></div>
+<section class="panel form-panel">
+  <div class="section-title"><span class="step-number">01</span><div><h2>Execution limits</h2><p class="muted">Limits apply to new task batches. Tasks are never started through a shell.</p></div></div>
+  <form method="post" action="{{ url_for('settings') }}" class="settings-form"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+    <label class="field">Maximum concurrent tasks<input type="number" name="max_parallel_tasks" min="1" max="4" value="{{ max_parallel }}" required><small>Between 1 and 4 independent tasks per workflow.</small></label>
+    <button class="button button-primary" type="submit">Save settings</button>
+  </form>
+</section>
+<section class="panel security-panel"><div class="section-title"><span class="step-number">02</span><div><h2>Local security boundaries</h2><p class="muted">These execution controls are enforced by the server, not just the UI.</p></div></div>
+  <dl class="settings-list"><div><dt>File operation root</dt><dd class="mono">{{ file_root }}</dd></div><div><dt>Allowed commands</dt><dd>{% for command in commands %}<span class="type-pill">{{ command }}</span>{% endfor %}</dd></div><div><dt>Task timeout</dt><dd>Up to 300 seconds per task</dd></div><div><dt>Command execution</dt><dd>Fixed argument lists, no shell, bounded output</dd></div><div><dt>Python operations</dt><dd>Built-in allowlist only; user-supplied Python is never evaluated</dd></div></dl>
+</section>
+<section class="callout callout-warning"><strong>Local-only application</strong><p>WorkflowRunner has no user authentication and is intended for a trusted, single-user machine. It binds to 127.0.0.1 by default. Do not expose it to untrusted networks or place sensitive data in task output.</p></section>
+{% endblock %}

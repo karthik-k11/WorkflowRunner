@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ workflow.name }} · WorkflowRunner{% endblock %}
+{% block section %}Workflow detail{% endblock %}
+{% block content %}
+<div class="page-heading detail-heading">
+  <div><p class="eyebrow">WORKFLOW</p><h1>{{ workflow.name }}</h1><p class="muted">{{ workflow.description or 'No description provided.' }}</p><div class="metadata-line"><span>{{ tasks|length }} tasks</span><span>Updated {{ workflow.updated_at|datetime }}</span></div></div>
+  <div class="button-row">
+    <form method="post" action="{{ url_for('workflow_run', workflow_id=workflow.workflow_id) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button class="button button-primary" type="submit" {{ 'disabled' if running or validation_errors }}>▶ Run workflow</button></form>
+    <a class="button button-secondary" href="{{ url_for('workflow_form', workflow_id=workflow.workflow_id) }}">Edit</a>
+    <a class="button button-secondary" href="{{ url_for('workflow_export', workflow_id=workflow.workflow_id) }}">Export</a>
+    <details class="menu-popover"><summary class="button button-secondary">More</summary><div class="popover-menu">
+      <form method="post" action="{{ url_for('workflow_duplicate', workflow_id=workflow.workflow_id) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit">Duplicate workflow</button></form>
+      <form method="post" action="{{ url_for('template_create', workflow_id=workflow.workflow_id) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><input type="hidden" name="template_name" value="{{ workflow.name }}"><button type="submit">Save as template</button></form>
+      <form method="post" action="{{ url_for('workflow_validate', workflow_id=workflow.workflow_id) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit">Validate definition</button></form>
+      <form method="post" action="{{ url_for('workflow_delete', workflow_id=workflow.workflow_id) }}" data-confirm="Archive this workflow? Execution history will be kept."><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button class="danger-text" type="submit">Archive workflow</button></form>
+    </div></details>
+  </div>
+</div>
+{% if validation_errors %}<div class="callout callout-error"><strong>Workflow needs attention</strong><ul>{% for error in validation_errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
+<div class="content-grid detail-grid">
+  <section class="panel"><div class="panel-heading"><div><h2>Dependency graph</h2><p class="muted">Arrows point from prerequisites to dependent tasks.</p></div><span class="graph-legend"><i></i> Task</span></div>
+    {% if tasks %}<div class="graph-container"><svg class="dependency-graph" viewBox="0 0 760 {{ [tasks|length * 92 + 30, 180]|max }}" role="img" aria-label="Workflow task dependency graph">
+      <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="currentColor"></path></marker></defs>
+      {% for task in tasks %}
+        {% set y = loop.index0 * 92 + 24 %}
+        {% for dependency in task.dependencies %}
+          {% for source in tasks if source.task_id == dependency %}
+            {% set source_y = (tasks|map(attribute='task_id')|list).index(dependency) * 92 + 24 %}
+            <path class="graph-edge" d="M 315 {{ source_y + 29 }} C 390 {{ source_y + 29 }}, 370 {{ y + 29 }}, 445 {{ y + 29 }}" marker-end="url(#arrow)"></path>
+          {% endfor %}
+        {% endfor %}
+      {% endfor %}
+      {% for task in tasks %}
+        {% set y = loop.index0 * 92 + 24 %}
+        <g class="graph-node {{ 'graph-node-disabled' if not task.enabled }}">
+          <rect x="85" y="{{ y }}" width="230" height="58" rx="8"></rect>
+          <text x="101" y="{{ y + 24 }}" class="graph-task-name">{{ task.name|truncate(28) }}</text>
+          <text x="101" y="{{ y + 43 }}" class="graph-task-meta">{{ task.task_type }} · {{ task.task_id }}</text>
+        </g>
+      {% endfor %}
+    </svg></div>{% else %}<div class="empty-state empty-compact"><h3>No tasks defined</h3><p>Add the first task to make this workflow runnable.</p><a class="button button-primary" href="{{ url_for('workflow_form', workflow_id=workflow.workflow_id) }}">Add tasks</a></div>{% endif %}
+  </section>
+  <section class="panel"><div class="panel-heading"><div><h2>Execution order</h2><p class="muted">Stable topological order</p></div></div>
+    {% if order %}<ol class="order-list">{% for task in order %}<li><span class="order-index">{{ '%02d'|format(loop.index) }}</span><span><strong>{{ task.name }}</strong><small>{{ task.task_type }}{% if task.dependencies %} · after {{ task.dependencies|join(', ') }}{% endif %}</small></span></li>{% endfor %}</ol>{% else %}<div class="empty-state empty-compact"><p>Add tasks to calculate execution order.</p></div>{% endif %}
+  </section>
+</div>
+<section class="panel task-table-panel"><div class="panel-heading"><div><h2>Task configuration</h2><p class="muted">Runtime limits and task definitions</p></div><a class="text-link" href="{{ url_for('workflow_form', workflow_id=workflow.workflow_id) }}">Edit tasks →</a></div>
+  {% if tasks %}<div class="table-wrap"><table><thead><tr><th>Task</th><th>Type</th><th>Dependencies</th><th>Timeout</th><th>State</th></tr></thead><tbody>{% for task in tasks %}<tr><td><strong>{{ task.name }}</strong><div class="table-subtext">{{ task.task_id }}</div></td><td><span class="type-pill">{{ task.task_type }}</span></td><td>{{ task.dependencies|join(', ') if task.dependencies else '—' }}</td><td>{{ task.timeout_seconds }}s</td><td>{{ 'Enabled' if task.enabled else 'Disabled' }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty-state empty-compact">No task configuration yet.</div>{% endif %}
+</section>
+<section class="panel"><div class="panel-heading"><div><h2>Recent runs</h2><p class="muted">Execution history for this workflow</p></div><a class="text-link" href="{{ url_for('executions') }}">Full history →</a></div>
+  {% if executions %}<div class="table-wrap"><table><thead><tr><th>Execution</th><th>Status</th><th>Started</th><th>Duration</th></tr></thead><tbody>{% for run in executions %}<tr><td><a class="table-link mono" href="{{ url_for('execution_detail', execution_id=run.execution_id) }}">{{ run.execution_id[:8] }}</a></td><td><span class="status status-{{ run.status }}">{{ run.status }}</span></td><td>{{ run.started_at|datetime }}</td><td>{{ "%.2f"|format(run.duration_seconds or 0) }}s</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty-state empty-compact"><p>No runs recorded. Start an execution when you're ready.</p></div>{% endif %}
+</section>
+{% endblock %}

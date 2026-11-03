@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Templates · WorkflowRunner{% endblock %}
+{% block section %}Templates{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">REUSE</p><h1>Workflow templates</h1><p class="muted">Turn a workflow definition into a reusable starting point.</p></div><a class="button button-primary" href="{{ url_for('workflow_form') }}">＋ New workflow</a></div>
+<section class="panel">
+  {% if templates %}<div class="template-grid">{% for template in templates %}
+    <article class="template-card"><div class="template-icon">▧</div><div class="template-card-main"><h2>{{ template.name }}</h2><p>{{ template.description or 'Reusable workflow definition' }}</p><small>Created {{ template.created_at|datetime }}</small></div><div class="button-row"><form method="post" action="{{ url_for('template_use', template_id=template.template_id) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button class="button button-primary button-small" type="submit">Use template</button></form><form method="post" action="{{ url_for('template_delete', template_id=template.template_id) }}" data-confirm="Delete this reusable template?"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button class="button button-quiet button-small" type="submit">Delete</button></form></div></article>
+  {% endfor %}</div>{% else %}<div class="empty-state"><div class="empty-icon">▧</div><h3>No templates saved</h3><p>Save a workflow as a template from its detail page to reuse it later.</p><a class="button button-secondary" href="{{ url_for('workflows') }}">Open workflows</a></div>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Workflows · WorkflowRunner{% endblock %}
+{% block section %}Workflows{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><p class="eyebrow">AUTOMATION</p><h1>Workflows</h1><p class="muted">Create, validate, and run repeatable local processes.</p></div>
+  <a class="button button-primary" href="{{ url_for('workflow_form') }}">＋ New workflow</a>
+</div>
+<section class="panel">
+  <div class="toolbar">
+    <form class="filter-form" method="get" action="{{ url_for('workflows') }}">
+      <label class="sr-only" for="workflow-search">Search workflows</label><input id="workflow-search" type="search" name="q" value="{{ query }}" placeholder="Search workflows…">
+      <label class="sr-only" for="workflow-status">Filter by latest status</label><select id="workflow-status" name="status"><option value="">All statuses</option>{% for status in ['success','failed','running'] %}<option value="{{ status }}" {{ 'selected' if status_filter == status else '' }}>{{ status|capitalize }}</option>{% endfor %}</select>
+      <button class="button button-secondary" type="submit">Filter</button>
+      {% if query or status_filter %}<a class="text-link" href="{{ url_for('workflows') }}">Clear</a>{% endif %}
+    </form>
+    <form method="post" action="{{ url_for('workflow_import') }}" enctype="multipart/form-data" class="import-form">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><label class="button button-secondary file-button">Import JSON<input type="file" name="workflow_file" accept=".json,application/json" required></label>
+      <button class="button button-secondary" type="submit">Upload</button>
+    </form>
+  </div>
+  {% if workflows %}
+  <div class="table-wrap"><table><thead><tr><th>Name</th><th>Tasks</th><th>Runs</th><th>Latest status</th><th>Updated</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody>
+    {% for workflow in workflows %}
+    <tr>
+      <td><a class="table-link" href="{{ url_for('workflow_detail', workflow_id=workflow.workflow_id) }}">{{ workflow.name }}</a><div class="table-subtext">{{ workflow.description or 'No description' }}</div></td>
+      <td>{{ workflow.task_count }}</td><td>{{ workflow.execution_count }}</td>
+      <td>{% if workflow.last_status %}<span class="status status-{{ workflow.last_status }}">{{ workflow.last_status }}</span>{% else %}<span class="status status-neutral">Draft</span>{% endif %}</td>
+      <td>{{ workflow.updated_at|datetime }}</td>
+      <td><a class="small-action" href="{{ url_for('workflow_form', workflow_id=workflow.workflow_id) }}">Edit</a></td>
+    </tr>
+    {% endfor %}
+  </tbody></table></div>
+  {% else %}
+  <div class="empty-state"><div class="empty-icon">▤</div><h3>{{ 'No matching workflows' if query or status_filter else 'No workflows yet' }}</h3><p>{{ 'Try another search or clear the filters.' if query or status_filter else 'Create a workflow or import a validated JSON definition.' }}</p>{% if not query and not status_filter %}<a class="button button-primary" href="{{ url_for('workflow_form') }}">Create your first workflow</a>{% endif %}</div>
+  {% endif %}
+</section>
+{% endblock %}

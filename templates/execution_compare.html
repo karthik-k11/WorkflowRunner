@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Compare executions · WorkflowRunner{% endblock %}
+{% block section %}Execution comparison{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">EXECUTION METRICS</p><h1>Compare runs</h1><p class="muted">{{ left.workflow_name }} · task statuses, timings, and output changes</p></div><a class="button button-secondary" href="{{ url_for('execution_detail', execution_id=right.execution_id) }}">Back to latest run</a></div>
+<section class="panel comparison-panel">
+  <div class="comparison-run-head"><div><span class="comparison-label">Earlier run</span><strong>{{ left.started_at|datetime }}</strong><small class="mono">{{ left.execution_id }}</small></div><span class="status status-{{ left.status }}">{{ left.status }}</span><div><span class="comparison-label">Compared run</span><strong>{{ right.started_at|datetime }}</strong><small class="mono">{{ right.execution_id }}</small></div><span class="status status-{{ right.status }}">{{ right.status }}</span></div>
+  <div class="metric-grid comparison-metrics"><article class="metric"><div class="metric-label">Earlier duration</div><div class="metric-value">{{ "%.2f"|format(left.duration_seconds or 0) }}s</div></article><article class="metric"><div class="metric-label">Compared duration</div><div class="metric-value">{{ "%.2f"|format(right.duration_seconds or 0) }}s</div></article><article class="metric"><div class="metric-label">Duration change</div><div class="metric-value">{{ "%+.2f"|format((right.duration_seconds or 0) - (left.duration_seconds or 0)) }}s</div></article></div>
+  {% if task_comparison %}<div class="table-wrap"><table><thead><tr><th>Task</th><th>Earlier</th><th>Compared</th><th>Duration change</th><th>Output</th></tr></thead><tbody>
+    {% for item in task_comparison %}<tr><td><strong>{{ item.name }}</strong><div class="table-subtext mono">{{ item.task_id }}</div></td><td>{% if item.left %}<span class="status status-{{ item.left.status }}">{{ item.left.status }}</span>{% else %}Not present{% endif %}</td><td>{% if item.right %}<span class="status status-{{ item.right.status }}">{{ item.right.status }}</span>{% else %}Not present{% endif %}</td><td>{% if item.duration_delta is not none %}{{ "%+.3f"|format(item.duration_delta) }}s{% else %}—{% endif %}</td><td>{% if item.output_changed is none %}—{% elif item.output_changed %}<span class="status status-running">Changed</span>{% else %}<span class="status status-neutral">Same</span>{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>{% endif %}
+</section>
+{% endblock %}

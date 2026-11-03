@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit workflow' if is_edit else 'New workflow' }} · WorkflowRunner{% endblock %}
+{% block section %}{{ 'Edit workflow' if is_edit else 'New workflow' }}{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><p class="eyebrow">WORKFLOW EDITOR</p><h1>{{ 'Edit workflow' if is_edit else 'Create workflow' }}</h1><p class="muted">Build a dependency-aware flow with structured task settings.</p></div>
+  <a class="button button-secondary" href="{{ url_for('workflow_detail', workflow_id=workflow.workflow_id) if is_edit else url_for('workflows') }}">Cancel</a>
+</div>
+<form id="workflow-editor" method="post" action="{{ url_for('workflow_save') }}" class="editor-form">
+  <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="workflow_id" value="{{ workflow.workflow_id if is_edit else '' }}">
+  <input type="hidden" name="tasks_json" id="tasks-json">
+  <section class="panel form-panel">
+    <div class="section-title"><span class="step-number">01</span><div><h2>Workflow details</h2><p class="muted">Give this automation a useful name and purpose.</p></div></div>
+    <div class="form-grid">
+      <label class="field field-wide">Workflow name<input name="name" value="{{ workflow.name }}" maxlength="120" required placeholder="e.g. Prepare release notes"></label>
+      <label class="field field-wide">Description<textarea name="description" rows="2" maxlength="1000" placeholder="What does this workflow do?">{{ workflow.description }}</textarea></label>
+    </div>
+  </section>
+  <section class="panel form-panel">
+    <div class="section-title"><span class="step-number">02</span><div><h2>Tasks</h2><p class="muted">Configure each task and select its prerequisites. Independent tasks may run together.</p></div><button class="button button-secondary button-small section-action" type="button" id="add-task">＋ Add task</button></div>
+    <div id="task-list" class="task-editor-list"></div>
+    <div id="editor-message" class="inline-error" role="alert"></div>
+    <noscript><p class="inline-error">Enable JavaScript to use the structured task editor.</p></noscript>
+    <div class="editor-help"><strong>Safe by design:</strong> Python tasks use built-in operations; command tasks select from an application allowlist; file tasks stay inside the configured file root.</div>
+  </section>
+  <div class="form-actions"><a class="button button-secondary" href="{{ url_for('workflows') }}">Cancel</a><button type="submit" class="button button-primary">Save workflow</button></div>
+</form>
+<script type="application/json" id="initial-task-data">{{ task_data|tojson }}</script>
+{% endblock %}

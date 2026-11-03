@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Execution history · WorkflowRunner{% endblock %}
+{% block section %}Executions{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">RUN HISTORY</p><h1>Executions</h1><p class="muted">Inspect outcomes and task-level logs from recent runs.</p></div></div>
+<section class="panel">
+  <div class="toolbar"><form class="filter-form" method="get" action="{{ url_for('executions') }}"><label class="sr-only" for="execution-status">Filter by status</label><select id="execution-status" name="status"><option value="">All statuses</option>{% for status in ['success','failed','running','cancelled','interrupted'] %}<option value="{{ status }}" {{ 'selected' if status_filter == status else '' }}>{{ status|capitalize }}</option>{% endfor %}</select><button class="button button-secondary" type="submit">Filter</button></form><span class="muted">{{ executions|length }} recent runs</span></div>
+  {% if executions %}<div class="table-wrap"><table><thead><tr><th>Workflow</th><th>Execution</th><th>Status</th><th>Started</th><th>Duration</th><th></th></tr></thead><tbody>
+    {% for run in executions %}<tr><td><a class="table-link" href="{{ url_for('workflow_detail', workflow_id=run.workflow_id) }}">{{ run.workflow_name }}</a></td><td class="mono">{{ run.execution_id[:8] }}</td><td><span class="status status-{{ run.status }}">{{ run.status }}</span></td><td>{{ run.started_at|datetime }}</td><td>{{ "%.2f"|format(run.duration_seconds or 0) }}s</td><td><a class="small-action" href="{{ url_for('execution_detail', execution_id=run.execution_id) }}">Details</a></td></tr>{% endfor %}
+  </tbody></table></div>{% else %}<div class="empty-state"><div class="empty-icon">◷</div><h3>No matching runs</h3><p>Executions appear here after you run a workflow.</p><a class="button button-secondary" href="{{ url_for('workflows') }}">Browse workflows</a></div>{% endif %}
+</section>
+{% endblock %}

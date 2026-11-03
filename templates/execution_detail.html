@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Execution {{ execution.execution_id[:8] }} · WorkflowRunner{% endblock %}
+{% block section %}Execution detail{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><p class="eyebrow">EXECUTION DETAIL</p><h1>{{ execution.workflow_name }}</h1><p class="muted mono">{{ execution.execution_id }}</p></div>
+  <div class="button-row"><span class="status status-{{ execution.status }}">{{ execution.status }}</span><a class="button button-secondary" href="{{ url_for('execution_report', execution_id=execution.execution_id) }}">Export report</a>{% if execution.status in ['running','queued'] %}<form method="post" action="{{ url_for('execution_cancel', execution_id=execution.execution_id) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button class="button button-danger" type="submit">Request cancellation</button></form>{% endif %}<a class="button button-secondary" href="{{ url_for('workflow_detail', workflow_id=execution.workflow_id) }}">Workflow</a></div>
+</div>
+{% if other_executions %}<form class="compare-toolbar" method="get" action="{{ url_for('execution_compare') }}"><input type="hidden" name="left" value="{{ execution.execution_id }}"><label for="compare-run">Compare with</label><select id="compare-run" name="right">{% for run in other_executions %}<option value="{{ run.execution_id }}">{{ run.started_at|datetime }} · {{ run.status }}</option>{% endfor %}</select><button class="button button-secondary button-small" type="submit">Compare runs</button></form>{% endif %}
+<div class="metric-grid execution-metrics">
+  <article class="metric"><div class="metric-label">Started</div><div class="metric-value metric-date">{{ execution.started_at|datetime }}</div></article>
+  <article class="metric"><div class="metric-label">Finished</div><div class="metric-value metric-date">{{ execution.ended_at|datetime if execution.ended_at else 'In progress' }}</div></article>
+  <article class="metric"><div class="metric-label">Duration</div><div class="metric-value">{{ "%.2f"|format(execution.duration_seconds or 0) }}s</div></article>
+  <article class="metric"><div class="metric-label">Tasks</div><div class="metric-value">{{ tasks|length }}</div></article>
+</div>
+{% if execution.error %}<div class="callout callout-error"><strong>Execution error</strong><pre class="plain-output">{{ execution.error }}</pre></div>{% endif %}
+<section class="panel"><div class="panel-heading"><div><h2>Task run log</h2><p class="muted">Each output is displayed as plain text; task results are not rendered as HTML.</p></div></div>
+  {% if tasks %}<div class="execution-task-list">
+    {% for task in tasks %}
+    <article class="execution-task">
+      <div class="execution-task-head"><div class="task-title-group"><span class="task-status-dot task-dot-{{ task.status }}"></span><div><h3>{{ task.task_name }}</h3><small class="mono">{{ task.task_id }}</small></div></div><div class="execution-task-meta"><span class="status status-{{ task.status }}">{{ task.status }}</span><span>{{ "%.2f"|format(task.duration_seconds or 0) }}s</span></div></div>
+      {% if task.error %}<pre class="task-output output-error">{{ task.error }}</pre>{% endif %}
+      {% if task.output_json %}<pre class="task-output">{{ task.output_json }}</pre>{% endif %}
+    </article>
+    {% endfor %}
+  </div>{% else %}<div class="empty-state empty-compact"><p>Task execution records will appear here as the run progresses.</p></div>{% endif %}
+</section>
+{% if execution.status in ['running', 'queued'] %}<script>window.setTimeout(() => window.location.reload(), 2500);</script>{% endif %}
+{% endblock %}

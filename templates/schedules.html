@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Schedules · WorkflowRunner{% endblock %}
+{% block section %}Schedules{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">LOCAL AUTOMATION</p><h1>Schedules</h1><p class="muted">Run workflows on a local interval while this application is open.</p></div></div>
+<section class="panel form-panel">
+  <div class="section-title"><span class="step-number">＋</span><div><h2>Create a schedule</h2><p class="muted">Schedules are stored locally and pause when WorkflowRunner is closed.</p></div></div>
+  <form method="post" action="{{ url_for('schedule_create') }}" class="schedule-form"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+    <label class="field">Workflow<select name="workflow_id" required><option value="">Choose workflow</option>{% for workflow in workflows %}<option value="{{ workflow.workflow_id }}">{{ workflow.name }}</option>{% endfor %}</select></label>
+    <label class="field">Repeat every (minutes)<input type="number" name="interval_minutes" min="1" max="43200" value="60" required></label>
+    <button class="button button-primary align-end" type="submit">Create schedule</button>
+  </form>
+</section>
+<section class="panel"><div class="panel-heading"><div><h2>Configured schedules</h2><p class="muted">At most one execution per workflow is active at a time.</p></div></div>
+  {% if schedules %}<div class="table-wrap"><table><thead><tr><th>Workflow</th><th>Interval</th><th>Next run</th><th>State</th><th>Last execution</th><th>Actions</th></tr></thead><tbody>{% for schedule in schedules %}
+    <tr><td><a class="table-link" href="{{ url_for('workflow_detail', workflow_id=schedule.workflow_id) }}">{{ schedule.workflow_name }}</a></td><td>Every {{ schedule.interval_minutes }} min</td><td>{{ schedule.next_run_at|datetime }}</td><td><span class="status {{ 'status-success' if schedule.enabled else 'status-neutral' }}">{{ 'enabled' if schedule.enabled else 'paused' }}</span></td><td>{% if schedule.last_execution_id %}<a class="small-action" href="{{ url_for('execution_detail', execution_id=schedule.last_execution_id) }}">{{ schedule.last_execution_id[:8] }}</a>{% else %}—{% endif %}</td><td><div class="inline-actions"><form method="post" action="{{ url_for('schedule_toggle', schedule_id=schedule.schedule_id) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button class="small-action" type="submit">{{ 'Pause' if schedule.enabled else 'Resume' }}</button></form><form method="post" action="{{ url_for('schedule_delete', schedule_id=schedule.schedule_id) }}" data-confirm="Delete this schedule?"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button class="small-action danger-text" type="submit">Delete</button></form></div></td></tr>
+  {% endfor %}</tbody></table></div>{% else %}<div class="empty-state empty-compact"><p>No local schedules configured.</p></div>{% endif %}
+</section>
+{% endblock %}
